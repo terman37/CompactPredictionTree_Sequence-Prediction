@@ -4,11 +4,10 @@ from tqdm import tqdm
 
 
 class CPT():
-
-    alphabet = None # A set of all unique items in the entire data file
-    root = None # Root node of the Prediction Tree
-    II = None #Inverted Index dictionary, where key : unique item, value : set of sequences containing this item
-    LT = None # A Lookup table dictionary, where key : id of a sequence(row), value: leaf node of a Prediction Tree
+    alphabet = None  # A set of all unique items in the entire data file
+    root = None  # Root node of the Prediction Tree
+    II = None  # Inverted Index dictionary, where key : unique item, value : set of sequences containing this item
+    LT = None  # A Lookup table dictionary, where key : id of a sequence(row), value: leaf node of a Prediction Tree
 
     def __init__(self):
         self.alphabet = set()
@@ -16,7 +15,7 @@ class CPT():
         self.II = {}
         self.LT = {}
 
-    def load_files(self,train_file,test_file = None):
+    def load_files(self, train_file, test_file=None):
 
         """
         This function reads in the wide csv file of sequences separated by commas and returns a list of list of those
@@ -29,34 +28,31 @@ class CPT():
 
 
         """
-        
-        data = [] # List of list containing the entire sequence data using which the model will be trained.
-        target = [] # List of list containing the test sequences whose next n items are to be predicted
-        
+
+        data = []  # List of list containing the entire sequence data using which the model will be trained.
+        target = []  # List of list containing the test sequences whose next n items are to be predicted
+
         if train_file is None:
             return train_file
-        
+
         train = pd.read_csv(train_file)
-    
+
         for index, row in train.iterrows():
             data.append(row.values)
-            
+
         if test_file is not None:
-            
+
             test = pd.read_csv(test_file)
-            
+
             for index, row in test.iterrows():
                 data.append(row.values)
                 target.append(list(row.values))
-                
-            return data, target
-        
-        return data
-        
 
+            return data, target
+
+        return data
 
     # In[3]:
-
 
     def train(self, data):
 
@@ -67,16 +63,15 @@ class CPT():
         Output : Boolean True
 
         """
-        
-        cursornode = self.root
-        
 
-        for seqid,row in enumerate(data):
+        cursornode = self.root
+
+        for seqid, row in enumerate(data):
             for element in row:
 
                 # adding to the Prediction Tree
 
-                if cursornode.hasChild(element)== False:
+                if cursornode.hasChild(element) == False:
                     cursornode.addChild(element)
                     cursornode = cursornode.getChild(element)
 
@@ -89,18 +84,16 @@ class CPT():
                     self.II[element] = set()
 
                 self.II[element].add(seqid)
-                
+
                 self.alphabet.add(element)
 
             self.LT[seqid] = cursornode
 
             cursornode = self.root
-            
+
         return True
 
-
-    def score(self, counttable,key, length, target_size, number_of_similar_sequences, number_items_counttable):
-
+    def score(self, counttable, key, length, target_size, number_of_similar_sequences, number_items_counttable):
 
         """
         This function is the main workhorse and calculates the score to be populated against an item. Items are predicted
@@ -112,22 +105,18 @@ class CPT():
 
         """
 
+        weight_level = 1 / number_of_similar_sequences
+        weight_distance = 1 / number_items_counttable
+        score = 1 + weight_level + weight_distance * 0.001
 
-
-        weight_level = 1/number_of_similar_sequences
-        weight_distance = 1/number_items_counttable
-        score = 1 + weight_level + weight_distance* 0.001
-        
         if counttable.get(key) is None:
             counttable[key] = score
         else:
             counttable[key] = score * counttable.get(key)
-            
+
         return counttable
 
-
-
-    def predict(self,data,target,k, n=1): 
+    def predict(self, data, target, k, n=1):
         """
         Here target is the test dataset in the form of list of list,
         k is the number of last elements that will be used to find similar sequences and,
@@ -137,21 +126,21 @@ class CPT():
 
         Output: max n predictions for each sequence
         """
-        
+
         predictions = []
-        
+
         for each_target in tqdm(target):
             each_target = each_target[-k:]
-            
-            intersection = set(range(0,len(data)))
-            
+
+            intersection = set(range(0, len(data)))
+
             for element in each_target:
                 if self.II.get(element) is None:
                     continue
                 intersection = intersection & self.II.get(element)
-            
+
             similar_sequences = []
-            
+
             for element in intersection:
                 currentnode = self.LT.get(element)
                 tmp = []
@@ -159,42 +148,38 @@ class CPT():
                     tmp.append(currentnode.Item)
                     currentnode = currentnode.Parent
                 similar_sequences.append(tmp)
-                
+
             for sequence in similar_sequences:
                 sequence.reverse()
-                
+
             counttable = {}
 
-            for  sequence in similar_sequences:
+            for sequence in similar_sequences:
                 try:
-                    index = next(i for i,v in zip(range(len(sequence)-1, 0, -1), reversed(sequence)) if v == each_target[-1])
+                    index = next(
+                        i for i, v in zip(range(len(sequence) - 1, 0, -1), reversed(sequence)) if v == each_target[-1])
                 except:
                     index = None
                 if index is not None:
                     count = 1
-                    for element in sequence[index+1:]:
+                    for element in sequence[index + 1:]:
                         if element in each_target:
                             continue
-                            
-                        counttable = self.score(counttable,element,len(each_target),len(each_target),len(similar_sequences),count)
-                        count+=1
 
+                        counttable = self.score(counttable, element, len(each_target), len(each_target),
+                                                len(similar_sequences), count)
+                        count += 1
 
-            pred = self.get_n_largest(counttable,n)
+            pred = self.get_n_largest(counttable, n)
             predictions.append(pred)
 
         return predictions
 
-
-
-    def get_n_largest(self,dictionary,n):
-
+    def get_n_largest(self, dictionary, n):
 
         """
         A small utility to obtain top n keys of a Dictionary based on their values.
 
         """
-        largest = sorted(dictionary.items(), key = lambda t: t[1], reverse=True)[:n]
-        return [key for key,_ in largest]
-
-
+        largest = sorted(dictionary.items(), key=lambda t: t[1], reverse=True)[:n]
+        return [key for key, _ in largest]
