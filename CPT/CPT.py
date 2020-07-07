@@ -74,7 +74,6 @@ class CPT():
                 if cursornode.hasChild(element) == False:
                     cursornode.addChild(element)
                     cursornode = cursornode.getChild(element)
-
                 else:
                     cursornode = cursornode.getChild(element)
 
@@ -82,7 +81,6 @@ class CPT():
 
                 if self.II.get(element) is None:
                     self.II[element] = set()
-
                 self.II[element].add(seqid)
 
                 self.alphabet.add(element)
