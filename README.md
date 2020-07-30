@@ -2,7 +2,7 @@
 
 An example of sequence prediction based on the CPT algorithm
 
-Docs available [here](/CPT_docs/CPT ADMA2013_Compact_Prediction_trees.pdf) and [here](/CPT_docs/CPT+1167-Article Text-2062-1-10-20171231.pdf)
+Docs available [here](CPT_docs/CPT_ADMA2013_Compact_Prediction_trees.pdf) and [here](CPT_docs/CPT+1167-Article_Text-2062-1-10-20171231.pdf)
 
 
 
@@ -41,12 +41,12 @@ Training the model consist of building the Tree, Inverted index and Lookup Table
 
   here CODE: 'PX9' is used in sequences 8,1,4,5
 
-![image-20200730141530242](images\II.png)
+  <img src="images\II.png" alt="II" style="zoom: 80%;" />
+
 
 - Lookup Table: dictionnary giving node adress of last element of a sequence:
 
-  ![LT](images\LT.png)
-
+  <img src="images\LT.png" alt="LT" style="zoom: 80%;" />
   
 
 #### Predictions:
