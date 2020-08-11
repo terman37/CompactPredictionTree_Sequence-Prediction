@@ -19,7 +19,7 @@ Tweaked for my own needs.
 - train.csv file desciption
   - ID: gouping id for sequence
   - CODE: sequence item 
-  - LINE_NB: poistion of item in sequence
+  - LINE_NB: position of item in sequence
 
 
 
